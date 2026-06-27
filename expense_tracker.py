@@ -79,6 +79,53 @@ def show_records(records):
     print("=" * 60)
 
 
+def show_monthly(records):
+    """查詢指定月份的收支紀錄與統計"""
+    if not records:
+        print("\n目前沒有任何紀錄。")
+        return
+
+    # 列出所有有紀錄的年月
+    months = sorted(set(r["date"][:7] for r in records), reverse=True)
+    print("\n目前有紀錄的月份：")
+    for i, m in enumerate(months, 1):
+        print(f"  {i}. {m}")
+
+    try:
+        choice = int(input("請選擇月份編號：").strip())
+        if not (1 <= choice <= len(months)):
+            print("編號超出範圍。")
+            return
+    except ValueError:
+        print("請輸入數字編號。")
+        return
+
+    selected_month = months[choice - 1]
+    # 篩選該月份的紀錄
+    monthly_records = [r for r in records if r["date"].startswith(selected_month)]
+
+    if not monthly_records:
+        print(f"\n{selected_month} 沒有任何紀錄。")
+        return
+
+    print(f"\n========== {selected_month} 收支紀錄 ==========")
+    print(f"{'日期':<18}{'類型':<6}{'金額':<10}{'類別':<10}備註")
+    print("-" * 60)
+    for r in monthly_records:
+        print(f"{r['date']:<18}{r['type']:<6}{r['amount']:<10.0f}{r['category']:<10}{r['note']}")
+
+    # 月份統計
+    total_income = sum(r["amount"] for r in monthly_records if r["type"] == "收入")
+    total_expense = sum(r["amount"] for r in monthly_records if r["type"] == "支出")
+    balance = total_income - total_expense
+
+    print("=" * 60)
+    print(f"本月收入：{total_income:.0f} 元")
+    print(f"本月支出：{total_expense:.0f} 元")
+    print(f"本月結餘：{balance:.0f} 元")
+    print("=" * 60)
+
+
 def show_summary(records):
     """計算並顯示總收入、總支出、結餘，以及各類別統計"""
     if not records:
@@ -102,7 +149,6 @@ def show_summary(records):
 
     if category_totals:
         print("\n--- 支出類別統計 ---")
-        # 依金額排序，從高到低
         sorted_categories = sorted(category_totals.items(), key=lambda x: x[1], reverse=True)
         for category, amount in sorted_categories:
             percentage = (amount / total_expense * 100) if total_expense > 0 else 0
@@ -137,9 +183,10 @@ def main():
         print("1. 新增紀錄")
         print("2. 查看所有紀錄")
         print("3. 收支總覽與類別統計")
-        print("4. 刪除紀錄")
-        print("5. 離開")
-        choice = input("請選擇功能 (1-5)：").strip()
+        print("4. 查看指定月份紀錄")
+        print("5. 刪除紀錄")
+        print("6. 離開")
+        choice = input("請選擇功能 (1-6)：").strip()
 
         if choice == "1":
             add_record(records)
@@ -148,12 +195,14 @@ def main():
         elif choice == "3":
             show_summary(records)
         elif choice == "4":
-            delete_record(records)
+            show_monthly(records)
         elif choice == "5":
+            delete_record(records)
+        elif choice == "6":
             print("感謝使用，再見！")
             break
         else:
-            print("輸入錯誤，請輸入 1 到 5 之間的數字。")
+            print("輸入錯誤，請輸入 1 到 6 之間的數字。")
 
 
 if __name__ == "__main__":
